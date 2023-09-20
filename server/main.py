@@ -1,8 +1,23 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import numpy as np
+from pydantic import BaseModel
 
 app = FastAPI()
+origins = [
+    "http://localhost:8080",  # 你的前端应用的地址和端口，根据实际情况进行调整
+]
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+class UpdateRequest(BaseModel):
+    current_state: str
 
 # 定义石头剪刀布类，实现马尔可夫链预测
 class RockPaperScissors:
@@ -73,7 +88,7 @@ rps = RockPaperScissors()
 
 
 @app.post("/update/")
-async def update(current_state: str):
+async def update(request: UpdateRequest):
     """
     函数名：update
     作用：更新状态转移计数矩阵
@@ -81,7 +96,7 @@ async def update(current_state: str):
     输出结果：字典 - 包含状态信息的字典
     作者：L4Walk
     """
-    rps.update_matrix(current_state)
+    rps.update_matrix(request.current_state)
     return {"status": "success"}
 
 
