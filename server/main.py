@@ -37,6 +37,8 @@ class RockPaperScissors:
         self.inverse_state_mapping = {0: "rock", 1: "paper", 2: "scissors"}
         # 上一状态的初始值为None
         self.previous_state = None
+        # 初始化游戏轮数计数器
+        self.round_count = 0
 
     def update_matrix(self, current_state: str):
         """
@@ -87,16 +89,29 @@ class RockPaperScissors:
 rps = RockPaperScissors()
 
 
+@app.post("/reset/")
+async def reset():
+    """
+    函数名：reset
+    作用：重置状态为初始状态
+    输入参数：无
+    输出结果：字典 - 包含重置状态的字典
+    作者：L4Walk
+    """
+    rps.__init__()  # 重新初始化RockPaperScissors类的实例
+    return {"status": "reset successful"}
+
 @app.post("/update/")
 async def update(request: UpdateRequest):
     """
     函数名：update
-    作用：更新状态转移计数矩阵
+    作用：更新状态转移计数矩阵和游戏轮数计数器
     输入参数：current_state (str) - 当前状态，可以是"rock"、"paper"或"scissors"
     输出结果：字典 - 包含状态信息的字典
     作者：L4Walk
     """
     rps.update_matrix(request.current_state)
+    rps.round_count += 1  # 增加游戏轮数计数
     return {"status": "success"}
 
 
@@ -113,15 +128,17 @@ async def predict():
     strategy = rps.strategy(prediction)
     return {"prediction": prediction, "strategy": strategy}
 
-@app.post("/reset/")
-async def reset():
+@app.get("/round/")
+async def get_round():
     """
-    函数名：reset
-    作用：重置状态为初始状态
+    函数名：get_round
+    作用：获取当前游戏轮数
     输入参数：无
-    输出结果：字典 - 包含重置状态的字典
+    输出结果：字典 - 包含当前游戏轮数的字典
     作者：L4Walk
     """
-    rps.__init__()  # 重新初始化RockPaperScissors类的实例
-    return {"status": "reset successful"}
+    return {"round_count": rps.round_count}
+
+
+
 
