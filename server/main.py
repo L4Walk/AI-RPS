@@ -16,8 +16,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class UpdateRequest(BaseModel):
     current_state: str
+    user_choice: str
+
 
 # 定义石头剪刀布类，实现马尔可夫链预测
 class RockPaperScissors:
@@ -85,6 +88,26 @@ class RockPaperScissors:
             return "rock"
 
 
+    def determine_result(self, user_choice: str, strategy: str):
+        """
+        函数名：determine_result
+        作用：确定游戏的结果
+        输入参数：
+            user_choice (str) - 用户的选择，可以是"rock"、"paper"或"scissors"
+            strategy (str) - API的策略选择，可以是"rock"、"paper"或"scissors"
+        输出结果：str - 游戏的结果，可以是"win"、"lose"或"draw"
+        作者：L4Walk
+        """
+        if user_choice == strategy:
+            return "draw"
+        elif (user_choice == "rock" and strategy == "scissors") or \
+             (user_choice == "scissors" and strategy == "paper") or \
+             (user_choice == "paper" and strategy == "rock"):
+            return "win"
+        else:
+            return "lose"
+
+
 # 初始化RockPaperScissors类的实例
 rps = RockPaperScissors()
 
@@ -107,12 +130,14 @@ async def update(request: UpdateRequest):
     函数名：update
     作用：更新状态转移计数矩阵和游戏轮数计数器
     输入参数：current_state (str) - 当前状态，可以是"rock"、"paper"或"scissors"
-    输出结果：字典 - 包含状态信息的字典
+    输出结果：字典 - 包含状态信息, AI的策略，游戏结果，游戏轮数的字典
     作者：L4Walk
     """
     rps.update_matrix(request.current_state)
     rps.round_count += 1  # 增加游戏轮数计数
-    return {"status": "success"}
+    strategy = rps.strategy(rps.predict())
+    result = rps.determine_result(request.user_choice, strategy)
+    return {"status": "success", "strategy": strategy, "result": result, "round": rps.round_count}
 
 
 @app.get("/predict/")
