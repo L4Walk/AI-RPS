@@ -112,3 +112,16 @@ async def predict():
     prediction = rps.predict()
     strategy = rps.strategy(prediction)
     return {"prediction": prediction, "strategy": strategy}
+
+@app.post("/reset/")
+async def reset():
+    """
+    函数名：reset
+    作用：重置状态为初始状态
+    输入参数：无
+    输出结果：字典 - 包含重置状态的字典
+    作者：L4Walk
+    """
+    rps.__init__()  # 重新初始化RockPaperScissors类的实例
+    return {"status": "reset successful"}
+
