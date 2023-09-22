@@ -1,20 +1,22 @@
 <template>
 <div>
-  <img src="../assets/blueshirt.png">
+  <img src="../assets/blueshirt.png" width="200px">
   <h1>AI小游戏-剪刀石头布</h1>
   <div class="choices">
       <img @click="makeChoice('rock')" :class="{ selected: userChoice === 'rock' }" src="../assets/rock.png" alt="Rock" >
       <img @click="makeChoice('paper')" :class="{ selected: userChoice === 'paper' }" src="../assets/paper.png" alt="Paper" >
       <img @click="makeChoice('scissors')" :class="{ selected: userChoice === 'scissors' }" src="../assets/scissors.png" alt="Scissors" >
   </div>
-  <button @click="update">Play</button>
+  <nut-button plain type="primary" @click="reset">重置</nut-button>
+  <div></div>
+  <nut-button block type="primary" @click="update" color="#3170a7">选择这个</nut-button>
 
   <h2>第{{ round }}轮的比赛结果</h2>
   <!-- 根据当前的状态转移概率预测下一状态。
   <div>Prediction: {{ prediction }}</div>
   -->
   <!-- 根据当前状态和预测状态，选择一个动作。 -->
-  <div>Strategy(AI的选择): {{ strategy }}</div>
+  <div>AI的选择: {{ strategy }}</div>
   <div v-if="strategy !== null">
       <img v-if="strategy === ''" src="../assets/gif.gif" alt="Loading">
       <img v-if="strategy === 'rock'" src="../assets/rock.png" alt="Rock">
@@ -23,21 +25,13 @@
   </div>
 
 
-
   <!-- 根据当前状态和预测状态，选择一个动作。 -->
-  <div>比赛结果: {{ result }}</div>
-
-  <div v-if="result">
-      <img v-if="result === 'You win!'" src="win.png" alt="Win">
-      <img v-if="result === 'Computer wins!'" src="lose.png" alt="Lose">
-      <img v-if="result === 'It s a tie!'" src="tie.png" alt="Tie">
-  </div>
+  <h3>获胜{{ win_count }}轮</h3>
 </div>
 </template>
 
 <script>
 import axios from 'axios';
-
 export default {
   data() {
     return {
@@ -47,6 +41,8 @@ export default {
       strategy: '',
       round: 1,
       result: '',
+      roundRes: [],
+      win_count: 0,
     };
   },
   methods: {
@@ -55,6 +51,14 @@ export default {
 
       this.userChoice = choice;
       console.log('Choice: ' + this.userChoice)
+    },
+
+    async reset(){
+      console.log("重制")
+      await axios.post('http://127.0.0.1:8000/reset/', {
+      });
+
+      this.win_count = 0;
     },
 
     async update() {
@@ -69,6 +73,19 @@ export default {
       this.strategy = updateResponse.data.strategy;
       this.round = updateResponse.data.round;
       this.result = updateResponse.data.result;
+
+      this.roundRes.push({
+        round: this.round,
+        userChoice:this.userChoice,
+        aiStrategy: this.strategy,
+        result: this.result
+      });
+
+      if(this.result == "win"){
+        this.win_count++;
+      }
+
+
       //const gameResult = updateResponse.data.result;
       //console.log('Result: ' + this.result);
 
@@ -80,9 +97,17 @@ export default {
         // 延迟 5 秒后重新设置 strategy 变量的值以重新加载
         setTimeout(() => {
         this.strategy = '';
-      }, 2500);
+      }, 3000);
     },
   },
+  computed: {
+
+    resultStatistics(){
+    return this.roundRes.map(result =>
+      `第${result.round}轮: 玩家选择${result.userChoice}, AI选择${ result.aiStrategy }，比赛结果${ result.result}`
+    ).join('\n');
+  }
+  }
 };
 </script>
 
